@@ -6,3 +6,6 @@ dev-dist/
 coverage/
 __pycache__/
 *.tsbuildinfo
+
+# ホールのデータなど、手元の分析用（サイトの規約上、公開・共有しない）
+local-data/

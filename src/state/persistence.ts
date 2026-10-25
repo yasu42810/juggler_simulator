@@ -1,6 +1,7 @@
 // localStorage の読み書き（内部設計 §6.2）。保存できない環境でも動作は止めない。
 
 import type { SimpleInput } from "../core/observation";
+import { isHallDay, type HallDay } from "./hallData";
 import type { PlaySession } from "./playSession";
 
 const PREFIX = "jsim:v1:";
@@ -83,6 +84,9 @@ export const savePrefs = (p: Prefs) => write("prefs", p);
 export const loadInput = (machineId: string) => read(`input:${machineId}`, isStoredInput);
 export const saveInput = (machineId: string, input: SimpleInput, now = new Date()) =>
   write(`input:${machineId}`, { input, updatedAt: now.toISOString() } satisfies StoredInput);
+
+export const loadHallDay = (machineId: string) => read(`hall:${machineId}`, isHallDay);
+export const saveHallDay = (machineId: string, d: HallDay | null) => write(`hall:${machineId}`, d);
 
 export const loadActivePlay = () => read("play:active", isSession);
 export const saveActivePlay = (s: PlaySession | null) => write("play:active", s);

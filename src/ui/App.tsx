@@ -17,6 +17,7 @@ export function App() {
         <div class="title-row">
           <h1>スロ設定ナビ</h1>
           <div class="head-actions">
+            <button class="icon-btn" onClick={() => (sheet.value = "hall")} aria-label="店のその日のデータ">店</button>
             <button class="icon-btn" onClick={() => (sheet.value = "history")} aria-label="実戦の履歴">履歴</button>
             <button class="icon-btn" onClick={() => (sheet.value = "settings")} aria-label="設定">設定</button>
             <button class="icon-btn" onClick={() => (sheet.value = "help")} aria-label="使い方と注意">？</button>

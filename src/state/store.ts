@@ -3,7 +3,10 @@
 import { computed, effect, signal } from "@preact/signals";
 import { buildFromPlay, buildFromSimple, emptySimpleInput, type SimpleInput } from "../core/observation";
 import { estimate, ImpossibleObservationError, type Estimate } from "../core/posterior";
+import { estimateHallMix, type HallMixEstimate } from "../core/priors/hallEstimate";
 import { DEFAULT_PRIOR_ID, presetsFor, resolvePrior } from "../core/priors/preset";
+import type { PriorSpec } from "../core/priors/types";
+import { parseHallFile, type HallDay } from "./hallData";
 import type { ChartData, CompareRow, Issue, LikelihoodOptions, Observation } from "../core/types";
 import { findMachine, registry, type MachineEntry } from "../machines/registry";
 import * as store from "./persistence";
@@ -28,13 +31,78 @@ export const machineId = signal<string>(
 export const mode = signal<"simple" | "play">(prefs?.mode ?? "simple");
 export const priorId = signal<string>(prefs?.priorId ?? DEFAULT_PRIOR_ID);
 export const enabled = signal<Record<string, boolean>>(prefs?.enabled ?? { grape: true });
-export const sheet = signal<null | "machine" | "settings" | "help" | "history">(null);
+export const sheet = signal<null | "machine" | "settings" | "help" | "history" | "hall">(null);
 
 export const entry = computed<MachineEntry | undefined>(() => findMachine(machineId.value));
 export const fields = computed(() => (entry.value ? entry.value.model.fields(entry.value.machine) : []));
 export const priorOptions = computed(() => (entry.value ? presetsFor(entry.value.machine) : []));
-export const prior = computed(() => (entry.value ? resolvePrior(entry.value.machine, priorId.value) : null));
 export const opts = computed<LikelihoodOptions>(() => ({ enabled: enabled.value }));
+
+// ---------- その日の店のデータ（FR-32） ----------
+export const HALL_PRIOR_ID = "hall";
+export const hallDay = signal<HallDay | null>(store.loadHallDay(machineId.value));
+/** 見ている台（推定から除く台）の台番号 */
+export const targetUnit = signal<string | null>(null);
+
+let hallLoadedFor = machineId.value;
+effect(() => {
+  const id = machineId.value;
+  if (id !== hallLoadedFor) {
+    hallLoadedFor = id;
+    hallDay.value = store.loadHallDay(id);
+    targetUnit.value = null;
+  }
+});
+
+export const hallEstimate = computed<HallMixEstimate | null>(() => {
+  const e = entry.value;
+  const d = hallDay.value;
+  if (!e || !d) return null;
+  try {
+    return estimateHallMix(e.model, e.machine, d.units, { enabled: {} }, { exclude: targetUnit.value });
+  } catch {
+    return null;
+  }
+});
+
+function hallPriorLabel(d: HallDay, est: HallMixEstimate): string {
+  const dt = new Date(d.date);
+  const excluded = est.excluded ? `、${est.excluded}番を除く` : "";
+  return `店のその日のデータ（${dt.getMonth() + 1}/${dt.getDate()}・${est.unitCount}台${excluded}）`;
+}
+
+export const prior = computed<PriorSpec | null>(() => {
+  const e = entry.value;
+  if (!e) return null;
+  const d = hallDay.value;
+  const est = hallEstimate.value;
+  if (priorId.value === HALL_PRIOR_ID && d && est) {
+    return { id: HALL_PRIOR_ID, label: hallPriorLabel(d, est), version: d.date, weights: est.mean };
+  }
+  return resolvePrior(e.machine, priorId.value === HALL_PRIOR_ID ? DEFAULT_PRIOR_ID : priorId.value);
+});
+
+export function loadHallFile(json: unknown): { ok: true } | { ok: false; message: string } {
+  const e = entry.value;
+  if (!e) return { ok: false, message: "機種が選ばれていません" };
+  try {
+    const d = parseHallFile(json, e.model, e.machine);
+    hallDay.value = d;
+    targetUnit.value = null;
+    store.saveHallDay(e.machine.id, d);
+    priorId.value = HALL_PRIOR_ID;
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export function clearHallDay(): void {
+  hallDay.value = null;
+  targetUnit.value = null;
+  store.saveHallDay(machineId.value, null);
+  if (priorId.value === HALL_PRIOR_ID) priorId.value = DEFAULT_PRIOR_ID;
+}
 
 effect(() => {
   store.savePrefs({ machineId: machineId.value, mode: mode.value, priorId: priorId.value, enabled: enabled.value });
@@ -290,4 +358,24 @@ export function clearAllData(): void {
   lastGood.value = null;
   priorId.value = DEFAULT_PRIOR_ID;
   enabled.value = { grape: true };
+}
+
+/** 店のデータの一覧から台を選ぶ。かんたん入力にその台の値を入れ、その台を除いた推定を事前分布にする */
+export function selectHallUnit(unit: string | null): void {
+  const d = hallDay.value;
+  targetUnit.value = unit;
+  if (!d || unit === null) return;
+  const u = d.units.find((x) => x.unit === unit);
+  if (!u) return;
+  const next: SimpleInput = {
+    games: String(u.obs.total.games),
+    counts: Object.fromEntries(Object.entries(u.obs.total.counts).map(([k, v]) => [k, String(v)])),
+    sessionGames: "",
+    sessionCounts: {},
+  };
+  simpleInput.value = next;
+  staleInputDate.value = null;
+  store.saveInput(machineId.value, next);
+  priorId.value = HALL_PRIOR_ID;
+  mode.value = "simple";
 }

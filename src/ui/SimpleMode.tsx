@@ -1,7 +1,7 @@
 // かんたん入力（UC-1, UC-3）: データカウンタの値を入れて、すぐ結果を見る。
 
 import {
-  entry, fields, prior, resetSimple, setSimpleField, simpleCharts, simpleInput, simpleResult, staleInputDate, staleResult,
+  entry, fields, HALL_PRIOR_ID, hallDay, prior, resetSimple, selectHallUnit, sheet, targetUnit, setSimpleField, simpleCharts, simpleInput, simpleResult, staleInputDate, staleResult,
 } from "../state/store";
 import { Card, IssueList } from "./common";
 import { dateLabel } from "./format";
@@ -18,6 +18,11 @@ export function SimpleMode() {
   const totalFields = fields.value.filter((f) => f.scope === "total");
   const sessionFields = fields.value.filter((f) => f.scope === "session");
   const shown = r.estimate ? r : stale?.view ?? null;
+  // 入力が店のデータの未選択の台と同じ値なら、その台を選ぶよう促す
+  const duplicate = hallDay.value && !targetUnit.value && r.obs
+    ? hallDay.value.units.find((u) => u.obs.total.games === r.obs!.total.games
+        && Object.entries(u.obs.total.counts).every(([k, v]) => r.obs!.total.counts[k] === v))?.unit ?? null
+    : null;
 
   return (
     <>
@@ -27,6 +32,24 @@ export function SimpleMode() {
           <div class="banner-actions">
             <button class="btn" onClick={resetSimple}>リセット</button>
             <button class="btn ghost" onClick={() => (staleInputDate.value = null)}>このまま使う</button>
+          </div>
+        </div>
+      )}
+
+      {hallDay.value && (
+        <div class="banner">
+          店のデータ: {hallDay.value.hall}・{dateLabel(hallDay.value.date)}・{hallDay.value.units.length}台
+          {targetUnit.value ? `／ 見ている台: ${targetUnit.value}番（推定から除外）` : ""}
+          {p.id !== HALL_PRIOR_ID && "（事前分布には使っていません）"}
+          {p.id === HALL_PRIOR_ID && duplicate && (
+            <p class="issue warning">
+              入力が一覧の{duplicate}番台と同じ値です。その台を見ているなら「この台を見る」で選んでください（選ばないと、同じデータを推定と入力の両方に使ってしまいます）。
+              <button class="btn small" onClick={() => selectHallUnit(duplicate)}>{duplicate}番台を選ぶ</button>
+            </p>
+          )}
+          <div class="banner-actions">
+            <button class="btn small" onClick={() => (sheet.value = "hall")}>台を選ぶ・推定を見る</button>
+            {targetUnit.value && <button class="btn ghost small" onClick={() => selectHallUnit(null)}>台の選択を外す</button>}
           </div>
         </div>
       )}

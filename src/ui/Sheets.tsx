@@ -4,7 +4,8 @@ import { useState } from "preact/hooks";
 import { PRESETS_NOTE } from "../core/priors/preset";
 import { toProbability, type ProbValue } from "../core/probability";
 import type { JugglerStandardV1Data } from "../core/models/jugglerStandardV1";
-import { clearAllData, deleteHistory, enabled, entry, playHistory, priorId, priorOptions, sheet } from "../state/store";
+import { clearAllData, deleteHistory, enabled, entry, HALL_PRIOR_ID, hallDay, hallEstimate, playHistory, priorId, priorOptions, sheet } from "../state/store";
+import { HallSheet } from "./HallSheet";
 import { TrendChart } from "../charts/TrendChart";
 import { Sheet, Swatch, themeKey } from "./common";
 import { DATA_TYPE_LABEL, dateLabel, num, oneIn, pct } from "./format";
@@ -22,6 +23,8 @@ export function Sheets() {
       return <HelpSheet />;
     case "history":
       return <HistorySheet />;
+    case "hall":
+      return <HallSheet />;
     default:
       return null;
   }
@@ -104,6 +107,18 @@ function SettingsSheet() {
             </label>
           );
         })}
+        {hallDay.value && hallEstimate.value ? (
+          <label class={`radio ${priorId.value === HALL_PRIOR_ID ? "checked" : ""}`}>
+            <input type="radio" name="prior" checked={priorId.value === HALL_PRIOR_ID} onChange={() => (priorId.value = HALL_PRIOR_ID)} />
+            <span>
+              <strong>店のその日のデータから推定</strong>
+              <span class="muted small-text">{e?.machine.settings.map((s) => `設${s} ${pct(hallEstimate.value!.mean[s] ?? 0)}`).join(" / ")}</span>
+              <span class="muted small-text">{hallDay.value.hall}・{dateLabel(hallDay.value.date)}・{hallDay.value.units.length}台（見ている台は除いて推定）</span>
+            </span>
+          </label>
+        ) : (
+          <button class="btn ghost small" onClick={() => (sheet.value = "hall")}>店のその日のデータを読み込む</button>
+        )}
       </div>
       <p class="note">実戦モードでは、打ち始めた時点の事前分布で計算します（途中で変えても、進行中の実戦には反映されません）。</p>
 
