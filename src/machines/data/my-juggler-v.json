@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "model": "juggler-standard-v1",
+  "id": "my-juggler-v",
+  "name": "マイジャグラーV",
+  "maker": "北電子",
+  "releaseDate": "2021-12-06",
+  "aliases": ["マイジャグ5"],
+  "dataVersion": "2026-10-25",
+  "status": "active",
+  "settings": ["1", "2", "3", "4", "5", "6"],
+  "settingGroups": [
+    { "label": "設定4以上", "settings": ["4", "5", "6"] },
+    { "label": "設定5以上", "settings": ["5", "6"] },
+    { "label": "設定6", "settings": ["6"] }
+  ],
+  "probabilities": {
+    "big": {
+      "values": {
+        "1": { "oneIn": 273.1 }, "2": { "oneIn": 270.8 }, "3": { "oneIn": 266.4 },
+        "4": { "oneIn": 254.0 }, "5": { "oneIn": 240.1 }, "6": { "oneIn": 229.1 }
+      },
+      "dataType": "published",
+      "measurement": "通常時ゲーム数あたり",
+      "sourceIds": ["S1", "S3"],
+      "basis": "第三者サイトに掲載のメーカー公表値。北電子公式の後継機（Ⅵ）の値（S0）とも一致"
+    },
+    "reg": {
+      "values": {
+        "1": { "oneIn": 409.6 }, "2": { "oneIn": 385.5 }, "3": { "oneIn": 336.1 },
+        "4": { "oneIn": 290.0 }, "5": { "oneIn": 268.6 }, "6": { "oneIn": 229.1 }
+      },
+      "dataType": "published",
+      "measurement": "通常時ゲーム数あたり",
+      "sourceIds": ["S1", "S3"],
+      "basis": "第三者サイトに掲載のメーカー公表値。北電子公式の後継機（Ⅵ）の値（S0）とも一致"
+    },
+    "grape": {
+      "values": {
+        "1": { "oneIn": 5.90 }, "2": { "oneIn": 5.85 }, "3": { "oneIn": 5.80 },
+        "4": { "oneIn": 5.78 }, "5": { "oneIn": 5.76 }, "6": { "oneIn": 5.66 }
+      },
+      "dataType": "analysis",
+      "measurement": "条件不明（出典に記載なし）",
+      "sourceIds": ["S4", "S8"],
+      "basis": "実用上の採用値。比較した出典の設定ごとの中央値とも一致（docs/research/my-juggler-v-spec.md §4.2）"
+    }
+  },
+  "published": {
+    "combinedOneIn": { "1": 163.8, "2": 159.1, "3": 148.6, "4": 135.4, "5": 126.8, "6": 114.6 }
+  },
+  "payout": {
+    "values": { "1": 97.0, "2": 98.0, "3": 99.9, "4": 102.8, "5": 105.3, "6": 109.4 },
+    "condition": "メーカー公表の出玉率（Ⅵ 公式では「工場データから算出した予測値」と注記）",
+    "dataType": "published",
+    "sourceIds": ["S1"]
+  },
+  "sources": [
+    { "id": "S0", "title": "北電子公式 マイジャグラーⅥ（同スペックの後継機）", "url": "https://www.kitadenshi.co.jp/slot/myjuggler6/", "accessed": "2026-10-25" },
+    { "id": "S1", "title": "パチセブン マイジャグラーV", "url": "https://pachiseven.jp/machines/6421", "accessed": "2026-10-25" },
+    { "id": "S3", "title": "一撃 マイジャグラー5 解析", "url": "https://1geki.jp/slot/s_myj5/", "accessed": "2026-10-25" },
+    { "id": "S4", "title": "DMMぱちタウン マイジャグラーV", "url": "https://p-town.dmm.com/machines/4029", "accessed": "2026-10-25" },
+    { "id": "S8", "title": "パチ＆スロ必勝本 ジャグラー設定看破ツール", "url": "https://p.hisshobon.jp/vpage/2078/1", "accessed": "2026-10-25" }
+  ]
+}
